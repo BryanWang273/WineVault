@@ -1,8 +1,16 @@
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = "https://dedjurtfbwbepzipmwku.supabase.co"
-const supabaseAnonKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlZGp1cnRmYndiZXB6aXBtd2t1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1NDg1NzYsImV4cCI6MjA2MTEyNDU3Nn0.u8C6z0elavY-gDQiytA8D9f1Ex7ry6D0QOXIJ8TGgx8"
+// NEXT_PUBLIC_ variables must be read as literal `process.env.NEXT_PUBLIC_*`
+// expressions so Next.js can inline them into the client bundle.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Missing Supabase environment variables. Copy .env.example to .env.local and set " +
+      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  )
+}
 
 export const createSupabaseClient = () => {
   try {

@@ -1,6 +1,10 @@
 // Import testing-library utilities
 import "@testing-library/jest-dom"
 
+// lib/supabase.ts reads these at import time. Tests get dummy values so no real project is contacted.
+process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321"
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key"
+
 // Mock the next/navigation hooks
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
