@@ -45,10 +45,10 @@ wine-marketplace/
 
 ```bash
 cd wine-marketplace
-npm install --legacy-peer-deps
+npm install
 ```
 
-`--legacy-peer-deps` is needed because `react-day-picker@8` does not declare React 19 support yet; plain `npm install` stops with an `ERESOLVE` error.
+The repo includes an `.npmrc` with `legacy-peer-deps=true`, because `react-day-picker@8` does not declare React 19 support yet. Without it, npm stops with an `ERESOLVE` error.
 
 ### 2. Configure environment variables
 
@@ -75,22 +75,23 @@ In the Supabase SQL Editor, run these in order on a fresh project:
 4. `sql/create-profiles-table.sql` (also creates the `user-content` storage bucket for avatars)
 5. `sql/create-orders-table.sql`, then `sql/fix-admin-orders-access.sql` (the final set of `orders` policies)
 6. `reset-purchased-wines-table.sql`
+7. `sql/admin-role-policies.sql` (run this last: it replaces the earlier "any signed-in user" policies with admin-only ones)
 
 The other `.sql` files are earlier iterations kept for reference: `supabase-setup.sql`, `update-tracked-wines-schema.sql`, `sql/ensure-orders-insert-policy.sql`, `sql/ensure-tracked-wines-schema.sql`, `sql/fix-orders-rls-policy.sql` and `sql/orders-rls-policy.sql`. The SQL accumulated during development, so these scripts were not run as a single migration.
 
 ### 4. Create the image bucket
 
-In Supabase Storage, create a **public** bucket named `wine-images`; the admin area uploads wine photos there. Signed-in users also need permission to upload to it, for example:
+In Supabase Storage, create a **public** bucket named `wine-images`; the admin area uploads wine photos there. Admins also need permission to upload to it (this uses the `is_admin()` function created by the previous step):
 
 ```sql
-create policy "Authenticated users can upload wine images"
+create policy "Admins can upload wine images"
 on storage.objects for insert to authenticated
-with check (bucket_id = 'wine-images');
+with check (bucket_id = 'wine-images' and public.is_admin());
 ```
 
 ### 5. Add some wines
 
-The catalogue is read from the `wines` table and there is no seed script. Add wines from the admin area (`/admin/wines/new`) or insert rows yourself. [`wine-marketplace/data/wines.ts`](wine-marketplace/data/wines.ts) holds nine sample wines in the app's shape that you can adapt.
+The catalogue is read from the `wines` table and there is no seed script. Add wines from the admin area (`/admin/wines/new`, which needs an admin account; see [Creating an admin account](#creating-an-admin-account)) or insert rows yourself. [`wine-marketplace/data/wines.ts`](wine-marketplace/data/wines.ts) holds nine sample wines in the app's shape that you can adapt.
 
 ### 6. Run it
 
@@ -102,7 +103,15 @@ Open <http://localhost:3000>. Other scripts: `npm run build`, `npm start`, `npm 
 
 ### Creating an admin account
 
-A user counts as an admin when their Supabase `role` metadata (`user_metadata` or `app_metadata`) is `admin`. As a development fallback, any account whose email contains `admin` is also treated as one.
+A user counts as an admin when their Supabase `app_metadata` contains `{"role": "admin"}`. Users can't edit `app_metadata` themselves, and the policies in `sql/admin-role-policies.sql` check the same claim. Sign up normally, then run this in the SQL Editor:
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
+where email = 'you@example.com';
+```
+
+Sign out and back in so your session picks up the new role.
 
 ## Known limitations
 
@@ -112,4 +121,4 @@ This is a demo project, not a production shop.
 - **Notifications are not implemented.** The home page mentions drink-window alerts, but nothing sends them yet.
 - **Drinking windows are rough estimates** calculated from the vintage year (and price, for purchased wines), not expert data.
 - **Purchase history** reads the `purchased_wines` table, which checkout does not write to. Checkout records an `orders` row and adds the bought wines to your collection instead.
-- **Admin access is not enforced server-side.** The admin check runs in the browser, and the Row Level Security policies in the SQL scripts let any signed-in user modify wines and view or update all orders. Replace them with role-based policies before using this with real data.
+- **Admin access relies on `sql/admin-role-policies.sql`.** The admin screens are hidden in the browser, but the real enforcement is the database policies. If you skip that script, the earlier scripts let any signed-in user modify wines and view or update all orders.

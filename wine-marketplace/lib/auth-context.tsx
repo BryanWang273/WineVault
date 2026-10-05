@@ -26,14 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Determine user role based on email or metadata
+  // Only app_metadata counts: unlike user_metadata, users cannot edit it themselves.
+  // The database policies in sql/admin-role-policies.sql check the same claim.
   const determineUserRole = (currentUser: User): string => {
-    // Check if role is in user metadata
-    const metadataRole = currentUser.user_metadata?.role || currentUser.app_metadata?.role
-    if (metadataRole) return metadataRole
-
-    // Fallback: Check email for admin pattern
-    return currentUser.email?.includes("admin") ? "admin" : "customer"
+    return currentUser.app_metadata?.role === "admin" ? "admin" : "customer"
   }
 
   // Update user with role
