@@ -4,6 +4,10 @@ A full-stack wine marketplace with an aging tracker. Browse a catalogue, add bot
 
 Built with Next.js 15, React 19, TypeScript, Tailwind CSS and Supabase (auth, Postgres, storage). The app lives in [`wine-marketplace/`](wine-marketplace).
 
+## Live demo
+
+**https://winevault-seven.vercel.app**: sign-up is open, so you can create an account and try the cart, checkout (simulated payment) and the aging tracker. It runs on free hosting (Vercel and a free Supabase project), so the first visit can be slow. The admin area isn't available in the demo.
+
 ## Features
 
 - **Catalogue**: search, sort and category filters (red, white, sparkling), plus detail pages with tasting notes, food pairings, aging potential and storage advice.
