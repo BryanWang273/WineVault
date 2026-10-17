@@ -67,33 +67,20 @@ Fill in the values from your Supabase project (Project Settings, then API):
 
 ### 3. Set up the database
 
-In the Supabase SQL Editor, run these in order on a fresh project:
+Open the Supabase **SQL Editor**, paste the whole contents of [`wine-marketplace/sql/fresh-setup.sql`](wine-marketplace/sql/fresh-setup.sql), and click **Run**. It is safe to run more than once. It creates:
 
-1. The `wines` and `tracked_wines` tables and their policies. This SQL lives in the comment block at the bottom of [`wine-marketplace/lib/supabase.ts`](wine-marketplace/lib/supabase.ts).
-2. `supabase-rls-policy.sql` (write policies for `wines`)
-3. `sql/create-users-table.sql`
-4. `sql/create-profiles-table.sql` (also creates the `user-content` storage bucket for avatars)
-5. `sql/create-orders-table.sql`, then `sql/fix-admin-orders-access.sql` (the final set of `orders` policies)
-6. `reset-purchased-wines-table.sql`
-7. `sql/admin-role-policies.sql` (run this last: it replaces the earlier "any signed-in user" policies with admin-only ones)
+- the `wines`, `tracked_wines`, `users`, `profiles`, `orders` and `purchased_wines` tables
+- Row Level Security policies: customers can only see and change their own data, and only admins can edit wines or see all orders
+- the `wine-images` and `user-content` storage buckets, with admin-only uploads for wine photos
+- nine sample wines (ids 1 to 4 are linked from the home page)
 
-The other `.sql` files are earlier iterations kept for reference: `supabase-setup.sql`, `update-tracked-wines-schema.sql`, `sql/ensure-orders-insert-policy.sql`, `sql/ensure-tracked-wines-schema.sql`, `sql/fix-orders-rls-policy.sql` and `sql/orders-rls-policy.sql`. The SQL accumulated during development, so these scripts were not run as a single migration.
+The other `.sql` files in `wine-marketplace/` and `wine-marketplace/sql/` are earlier iterations kept for reference. You don't need to run them.
 
-### 4. Create the image bucket
+### 4. Add more wines (optional)
 
-In Supabase Storage, create a **public** bucket named `wine-images`; the admin area uploads wine photos there. Admins also need permission to upload to it (this uses the `is_admin()` function created by the previous step):
+The nine sample wines are enough to browse. To add more, use the admin area at `/admin/wines/new`, which needs an admin account; see [Creating an admin account](#creating-an-admin-account).
 
-```sql
-create policy "Admins can upload wine images"
-on storage.objects for insert to authenticated
-with check (bucket_id = 'wine-images' and public.is_admin());
-```
-
-### 5. Add some wines
-
-The catalogue is read from the `wines` table and there is no seed script. Add wines from the admin area (`/admin/wines/new`, which needs an admin account; see [Creating an admin account](#creating-an-admin-account)) or insert rows yourself. [`wine-marketplace/data/wines.ts`](wine-marketplace/data/wines.ts) holds nine sample wines in the app's shape that you can adapt.
-
-### 6. Run it
+### 5. Run it
 
 ```bash
 npm run dev
